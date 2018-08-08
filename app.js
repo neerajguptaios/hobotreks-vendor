@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const eventRoutes = require('./api/routes/events');
-// const orderRoutes = require('./api/routes/orders');
+const adminRoutes = require('./api/routes/admins');
 const userRoutes = require('./api/routes/users');
 
 mongoose.connect('mongodb+srv://niku_singla:'+ process.env.MONGO_ATLAS_PW +'@hobo01-fhitw.mongodb.net/test?retryWrites=true',{
@@ -35,7 +35,7 @@ app.use((req,res,next)=>{
 
 //Routes to handle reuests
 app.use('/events',eventRoutes);
-// app.use('/orders',orderRoutes);
+app.use('/admins',adminRoutes);
 app.use('/users',userRoutes);
 
 
