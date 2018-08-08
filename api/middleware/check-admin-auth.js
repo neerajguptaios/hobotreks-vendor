@@ -12,7 +12,7 @@ module.exports.checkAuthAdmin = (req, res, next ) => {
             message : "Auth Failed!"
         });
     }
-}
+};
 
 module.exports.checkSignupToken = (req, res, next ) => {
     const token = req.headers.authorization;
