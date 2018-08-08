@@ -3,6 +3,8 @@ const app = express();
 const morgon = require('morgan');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const multer  = require('multer')
+const upload = multer()
 
 const eventRoutes = require('./api/routes/events');
 const adminRoutes = require('./api/routes/admins');
@@ -32,6 +34,8 @@ app.use((req,res,next)=>{
     }
     next();
 });
+
+app.use('/',upload.array());
 
 //Routes to handle reuests
 app.use('/events',eventRoutes);

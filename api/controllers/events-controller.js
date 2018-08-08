@@ -9,7 +9,6 @@ exports.get_all_events = (req,res,next) => {
     .select('_id name cost_per_night place image')
     .exec()
     .then(docs => {
-        console.log(docs);
 
         const response = {
             count : docs.length,
@@ -30,7 +29,6 @@ exports.get_all_events = (req,res,next) => {
         res.status(200).json(response);
     })
     .catch(err => {
-        console.log(err);
         res.status(500).json({
             error:err
         });
@@ -81,7 +79,6 @@ exports.get_single_event = (req,res,next) => {
     .select('_id name cost_per_night image place')
     .exec()
     .then(result => {
-        console.log("From Database", result);
         if(result){
             res.status(200).json({
                 event : result,
@@ -112,7 +109,6 @@ exports.delete_event = (req,res,next) => {
     Event.remove({_id : id, user : userId})
     .exec()
     .then(result => {
-        console.log("From Database", result);
         res.status(200).json({
             message : "Event deleted",
             request : {
@@ -147,7 +143,6 @@ exports.update_event = (req,res,next) => {
     Event.update({_id : id, user : userId},{ $set : updateOps})
     .exec()
     .then(result => {
-        console.log(result);
         res.status(200).json({
             message : "Event updated",
             request : {
@@ -157,7 +152,6 @@ exports.update_event = (req,res,next) => {
         });
     })
     .catch(err => {
-        console.log(result);
         res.status(500).json({
             error : err
         });
