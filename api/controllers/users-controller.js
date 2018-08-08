@@ -4,23 +4,6 @@ const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 
 
-
-exports.get_all_users = (req,res,next) => {
-    User.find()
-    .exec()
-    .then( result => {
-        return res.status(200).json({
-            count : result.length,
-            users : result
-        });
-    })
-    .catch(err => {
-        return res.status(500).json({
-            error : err
-        });
-    });
-};
-
 exports.post_new_user = (req,res,next) => {
     User.find({email : req.body.email})
     .exec()
