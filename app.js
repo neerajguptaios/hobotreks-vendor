@@ -8,7 +8,7 @@ const productRoutes = require('./api/routes/products');
 const orderRoutes = require('./api/routes/orders');
 const userRoutes = require('./api/routes/users');
 
-mongoose.connect('mongodb+srv://niku_singla:'+ process.env.MONGO_ATLAS_PW +'@test01-fhitw.mongodb.net/test?retryWrites=true',{
+mongoose.connect('mongodb+srv://niku_singla:'+ process.env.MONGO_ATLAS_PW +'@hobo01-fhitw.mongodb.net/test?retryWrites=true',{
     useNewUrlParser:true
 } );
 
