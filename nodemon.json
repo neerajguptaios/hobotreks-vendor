@@ -1,6 +1,7 @@
 {
     "env":{
         "MONGO_ATLAS_PW" :"niku_singla",
-        "JWT_PASS_KEY" : "secret"
+        "JWT_PASS_KEY" : "secret",
+        "JWT_ADMIN_PASS_KEY" : "admin_secret"
     }
 }

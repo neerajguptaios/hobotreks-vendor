@@ -1,5 +1,4 @@
-const User = require('../models/user');
-const Admin = require('../models/admin');
+const User = require('../models/admin');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
@@ -8,12 +7,28 @@ const jwt = require("jsonwebtoken");
 exports.get_all_users = (req,res,next) => {
     User.find()
     .exec()
+    .then( result => {
+        return res.status(200).json({
+            count : result.length,
+            users : result
+        });
+    })
+    .catch(err => {
+        return res.status(500).json({
+            error : err
+        });
+    });
+};
+
+exports.get_all_admins = (req,res,next) => {
+    Admin.find()
+    .exec()
     .then( results => {
         return res.status(200).json({
             count : results.length,
             users : results.map(result => {
                 return {
-                    
+                    Email : result.email
                 }
             })
         });
@@ -26,7 +41,8 @@ exports.get_all_users = (req,res,next) => {
 };
 
 exports.post_new_admin = (req,res,next) => {
-    User.find({email : req.body.email})
+
+    Admin.find({email : req.body.email})
     .exec()
     .then(result => {
         if(result.length >= 1){
@@ -42,16 +58,28 @@ exports.post_new_admin = (req,res,next) => {
                     });
                 }
                 else{
-                    const user = new User({
+                    const admin = new Admin({
                         _id : mongoose.Types.ObjectId(),
                         email : req.body.email,
                         password : hash
                     });
 
-                    user.save()
+                    admin.save()
                     .then(result => {
+
+                        const token = jwt.sign(
+                            {
+                                email : admin.email,
+                                adminId : admin._id
+                            },
+                            process.env.JWT_ADMIN_PASS_KEY,
+                            {
+                                expiresIn : "1h"
+                            }
+                        );
                         return res.status(201).json({
-                            message : "User Created"
+                            message : "Admin Created",
+                            token : token
                         });                
                     })
                     .catch(err => {
@@ -72,7 +100,7 @@ exports.post_new_admin = (req,res,next) => {
 
 
 exports.try_login = (req,res,next) => {
-    User.find({email : req.body.email})
+    Admin.find({email : req.body.email})
     .exec()
     .then(result => {
         if(result.length < 1){
@@ -95,7 +123,7 @@ exports.try_login = (req,res,next) => {
                                 email : result[0].email,
                                 userId : result[0]._id
                             },
-                            process.env.JWT_PASS_KEY,
+                            process.env.JWT_ADMIN_PASS_KEY,
                             {
                                 expiresIn : "1h"
                             }
@@ -122,12 +150,28 @@ exports.try_login = (req,res,next) => {
 };
 
 exports.delete_user = (req, res, next)=>{
-    const userId = req.userData.userId;
-    User.remove({ _id : userId })
+    User.remove({ _id : req.params.userId })
     .exec()
     .then(result => {
         return res.status(200).json({
             message : "user deleted"
+        });
+    })
+    .catch(err => {
+        return res.status(500).json({
+            error : err
+        });
+    });
+};
+
+exports.delete_admin = (req, res, next)=>{
+    const adminId = req.userData.adminId;
+
+    Admin.remove({ _id : adminId })
+    .exec()
+    .then(result => {
+        return res.status(200).json({
+            message : "admin deleted"
         });
     })
     .catch(err => {

@@ -22,9 +22,6 @@ exports.get_all_users = (req,res,next) => {
 };
 
 exports.post_new_user = (req,res,next) => {
-
-    console.log(req.body.email);
-    console.log(req.body.password);
     User.find({email : req.body.email})
     .exec()
     .then(result => {
@@ -34,7 +31,6 @@ exports.post_new_user = (req,res,next) => {
             });
         }
         else{
-            console.log(req.body);
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 if(err){
                     return res.status(500).json({
@@ -50,7 +46,6 @@ exports.post_new_user = (req,res,next) => {
 
                     user.save()
                     .then(result => {
-                        console.log(result);
                         return res.status(201).json({
                             message : "User Created"
                         });                
@@ -123,7 +118,8 @@ exports.try_login = (req,res,next) => {
 };
 
 exports.delete_user = (req, res, next)=>{
-    User.remove({ _id : req.params.userId })
+    const userId = req.userData.userId;
+    User.remove({ _id : userId })
     .exec()
     .then(result => {
         return res.status(200).json({
