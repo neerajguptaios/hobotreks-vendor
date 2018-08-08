@@ -23,6 +23,8 @@ exports.get_all_users = (req,res,next) => {
 
 exports.post_new_user = (req,res,next) => {
 
+    console.log(req.body.email);
+    console.log(req.body.password);
     User.find({email : req.body.email})
     .exec()
     .then(result => {
@@ -32,6 +34,7 @@ exports.post_new_user = (req,res,next) => {
             });
         }
         else{
+            console.log(req.body);
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 if(err){
                     return res.status(500).json({

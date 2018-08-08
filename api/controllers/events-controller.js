@@ -38,7 +38,7 @@ exports.get_all_events = (req,res,next) => {
 };
 
 exports.post_new_event = (req,res,next) => {
-    const userId = req.userData._id;
+    const userId = req.userData.userId;
 
     const event = new Event({
         _id : new mongoose.Types.ObjectId(),
@@ -51,7 +51,6 @@ exports.post_new_event = (req,res,next) => {
 
     event.save()
     .then(result =>{
-        console.log(result);
         res.status(200).json({
             message : 'Created successfully',
             created_event : {
