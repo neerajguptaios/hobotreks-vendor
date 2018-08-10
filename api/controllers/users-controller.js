@@ -2,31 +2,19 @@ const User = require('../models/user');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
-const Nexmo = require('nexmo');
-
-const nexmo = new Nexmo({
-  apiKey: "879ba2c0",
-  apiSecret: "CaSkha79myFb1PYy"
-});
  
 
 exports.post_new_user = (req,res,next) => {
     console.log(req.body);
-    User.find({email : req.body.email})
+    let user = {};
+    User.find({mobile : req.body.mobile})
     .exec()
     .then(result => {
         if(result.length >= 1){
-            return res.status(409).json({
-                message : "mail exists!"
-            });
+            user = result[0];
+            user.sendAuthToken(afterRequestingOtp);
         }
         else{
-            password = req.body.password;
-            if(!password){
-                return res.status(401).json({
-                    error : "password is required"
-                });
-            }
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 if(err){
                     return res.status(500).json({
@@ -34,46 +22,25 @@ exports.post_new_user = (req,res,next) => {
                     });
                 }
                 else{
-                    nexmo.verify.request({number: req.body.mobile, brand: 'Hobotreks Company', country : 'IN'}, (err, 
-                        result) => {
-                          if(err) {
-                            return res.status(500).json({
-                                Error : err
-                            });
-                          } else {
-                              console.log("result - " + result);
-                            let requestId = result.request_id;
-                            if(result.status == '0') {
-                                const user = new User({
-                                    _id : mongoose.Types.ObjectId(),
-                                    email : req.body.email,
-                                    password : hash,
-                                    name : req.body.name,
-                                    request_id : requestId,
-                                    mobile : req.body.mobile
-                                });
-                                user.save()
-                                .then(result => {
-                                    return res.status(201).json({
-                                        message : "User Created - verify Otp",
-                                    });                
-                                })
-                                .catch(err => {
-                                    return res.status(500).json({
-                                        error : err
-                                    });                
-                                });            
-                            } else {
-                                res.status(401).json({
-                                    Error : result.error_text
-                                  });
-                              }
-          
-                            }
-                        });
+                    const user = new User({
+                    _id : mongoose.Types.ObjectId(),
+                    email : req.body.email,
+                    password : hash,
+                    name : req.body.name,
+                    mobile : req.body.mobile
+                    });
 
-                    }
-                });
+                    user.save()
+                    .then(result => {
+                        user.sendAuthToken(afterRequestingOtp);
+                    })
+                    .catch(err => {
+                        return res.status(500).json({
+                            error : err
+                        });                
+                    });            
+                }   
+            });
         }
     })
     .catch(err => {
@@ -81,6 +48,19 @@ exports.post_new_user = (req,res,next) => {
             error : err
         });
     });
+
+
+    function afterRequestingOtp(err, result){
+        if(err || !result){
+            return res.status(401).json({
+                error : err
+            });
+        }
+        return res.status(200).json({
+            message : "Otp successfully sent"
+        });
+    }
+    
 };
 
 
@@ -95,52 +75,8 @@ exports.verify_user = (req,res,next) => {
         }
         else{
             let pin = req.body.otp;
-            let requestId = result[0].request_id;
-            
-            console.log(result);
-
-            nexmo.verify.check({request_id: requestId, code: pin}, (err, result) => {
-                if(err) {
-                    return res.status(500).json({
-                        message : "Server Error",
-                        error : err
-                    });    
-            } else {
-                if(result && result.status == '0') { // Success!
-                    User.update({_id : result[0]._id},{ $set : {
-                        mobile_verified : true
-                    }})
-                    .exec()
-                    .then(result => {
-                        const token = jwt.sign(
-                            {
-                                email : result[0].email,
-                                userId : result[0]._id
-                            },
-                            process.env.JWT_PASS_KEY,
-                            {
-                                expiresIn : "1h"
-                            }
-                        );
-                        return res.status(200).json({
-                            message : "Account verified! 🎉",
-                             token : token
-                        })
-                    })
-                    .catch(err => {
-                        return res.status(500).json({
-                            message : "Server Error",
-                            error : err
-                        });    
-                    });
-                } else {
-                    return res.status(409).json({
-                        message : "Wrong Otp",
-                        result : result
-                    });
-                }
-            }
-        });
+            let user = result[0];
+            user.verifyAuthToken(pin,afterVerifingOtp);
         }
     })
     .catch(err => {
@@ -148,11 +84,36 @@ exports.verify_user = (req,res,next) => {
             error : err
         });
     });
+
+
+    function afterVerifingOtp(err, result){
+        if(err || !result){
+            return res.status(401).json({
+                error : err
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                email : result[0].email,
+                userId : result[0]._id
+            },
+            process.env.JWT_PASS_KEY,
+            {
+                expiresIn : "1h"
+            }
+        );
+        return res.status(200).json({
+            message : "Account verified! 🎉",
+             token : token
+        })
+    }
+
 }
 
 
 exports.try_login = (req,res,next) => {
-    User.find({email : req.body.email})
+    User.find({mobile : req.body.mobile})
     .exec()
     .then(result => {
         if(result.length < 1){
