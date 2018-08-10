@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 
 
 exports.get_all_users = (req,res,next) => {
+    console.log("hello get all users  - ");
     User.find()
     .exec()
     .then( result => {

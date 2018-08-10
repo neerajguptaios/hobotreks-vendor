@@ -1,7 +1,6 @@
 const User = require('../models/user');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const jwt = require("jsonwebtoken");
  
 
 exports.post_new_user = (req,res,next) => {
@@ -12,7 +11,7 @@ exports.post_new_user = (req,res,next) => {
     .then(result => {
         if(result.length >= 1){
             user = result[0];
-            user.sendAuthToken(afterRequestingOtp);
+            user.requestOtp(afterRequestingOtp);
         }
         else{
             bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -32,7 +31,7 @@ exports.post_new_user = (req,res,next) => {
 
                     user.save()
                     .then(result => {
-                        user.sendAuthToken(afterRequestingOtp);
+                        user.requestOtp(afterRequestingOtp);
                     })
                     .catch(err => {
                         return res.status(500).json({
@@ -76,7 +75,7 @@ exports.verify_user = (req,res,next) => {
         else{
             let pin = req.body.otp;
             let user = result[0];
-            user.verifyAuthToken(pin,afterVerifingOtp);
+            user.verifyMobileNumber(pin,afterVerifingOtp);
         }
     })
     .catch(err => {
@@ -93,20 +92,18 @@ exports.verify_user = (req,res,next) => {
             });
         }
 
-        const token = jwt.sign(
-            {
-                email : result[0].email,
-                userId : result[0]._id
-            },
-            process.env.JWT_PASS_KEY,
-            {
-                expiresIn : "1h"
-            }
-        );
-        return res.status(200).json({
-            message : "Account verified! 🎉",
-             token : token
+        result.requestAuthToken()
+        .then(token => {
+            return res.status(200).json({
+                message : "Account verified! 🎉",
+                 token : token
+            })    
         })
+        .catch(err => {
+            return res.status(401).json({
+                error : err
+            });
+        });
     }
 
 }
@@ -137,20 +134,18 @@ exports.try_login = (req,res,next) => {
                 else{
                     if(match){
 
-                        const token = jwt.sign(
-                            {
-                                email : result[0].email,
-                                userId : result[0]._id
-                            },
-                            process.env.JWT_PASS_KEY,
-                            {
-                                expiresIn : "1h"
-                            }
-                        );
-                        return res.status(200).json({
-                            message : "Auth Successful",
-                             token : token
+                        result[0].requestAuthToken()
+                        .then(token => {
+                            return res.status(200).json({
+                                message : "Auth Logged In! 🎉",
+                                 token : token
+                            })    
                         })
+                        .catch(err => {
+                            return res.status(401).json({
+                                error : err
+                            });
+                        });
                     }
                     else{
                         return res.status(401).json({

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-
 const Nexmo = require('nexmo');
+const jwt = require("jsonwebtoken");
+
 
 const nexmo = new Nexmo({
   apiKey: "879ba2c0",
@@ -39,7 +40,7 @@ const userSchema = mongoose.Schema({
 });
 
 
-userSchema.methods.verifyAuthToken = function(otp, cb) {
+userSchema.methods.verifyMobileNumber = function(otp, cb) {
     const self = this;
 
     nexmo.verify.check({request_id: self.request_id, code: otp}, (err, result) => {
@@ -60,7 +61,7 @@ userSchema.methods.verifyAuthToken = function(otp, cb) {
 };
 
 
-userSchema.methods.sendAuthToken = function(cb) {
+userSchema.methods.requestOtp = function(cb) {
     var self = this;
     nexmo.verify.request({number: self.mobile, brand: 'Hobotreks Company', country : 'IN'},(err,res)=>{
         
@@ -79,6 +80,22 @@ userSchema.methods.sendAuthToken = function(cb) {
     });
 
 };
+
+userSchema.methods.requestAuthToken = () => {
+    var self = this;
+
+    const token = jwt.sign(
+        {
+            mobile : self.mobile,
+            userId : self._id
+        },
+        process.env.JWT_PASS_KEY,
+        {
+            expiresIn : "1h"
+        }
+    );
+    return Promise.resolve(token);
+}
 
 
 module.exports = mongoose.model('User', userSchema);
