@@ -16,8 +16,8 @@ module.exports.checkAuthAdmin = (req, res, next ) => {
 
 module.exports.checkSignupToken = (req, res, next ) => {
     const token = req.headers.authorization;
-    if(token == process.env.JWT_ADMIN_PASS_KEY){
-        next();
+    if(token == process.env.JWT_ADMIN_PASS_TOKEN){
+        return next();
     }
 
     return res.status(401).json({

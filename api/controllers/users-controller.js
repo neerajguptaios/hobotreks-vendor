@@ -9,11 +9,22 @@ exports.post_new_user = (req,res,next) => {
     User.find({mobile : req.body.mobile})
     .exec()
     .then(result => {
+
+        var alreadyExists = false;
+
         if(result.length >= 1){
             user = result[0];
-            user.requestOtp(afterRequestingOtp);
+
+            if(user.mobile_verified){
+                return res.status(500).json({
+                    message : "Mobile number already exist, please login."
+                });    
+            }
+
+            alreadyExists = true;
+
+            // user.requestOtp(afterRequestingOtp,req,res);
         }
-        else{
             bcrypt.hash(req.body.password, 10, (err, hash) => {
                 if(err){
                     return res.status(500).json({
@@ -21,26 +32,47 @@ exports.post_new_user = (req,res,next) => {
                     });
                 }
                 else{
-                    const user = new User({
-                    _id : mongoose.Types.ObjectId(),
-                    email : req.body.email,
-                    password : hash,
-                    name : req.body.name,
-                    mobile : req.body.mobile
-                    });
 
-                    user.save()
-                    .then(result => {
-                        user.requestOtp(afterRequestingOtp);
-                    })
-                    .catch(err => {
-                        return res.status(500).json({
-                            error : err
-                        });                
-                    });            
+                    if (alreadyExists){
+
+                        User.update({_id : user._id},{ $set : {
+                            email : req.body.email,
+                            password : hash,
+                            name : req.body.name,
+                        }})
+                        .exec()
+                        .then(resultt => {
+                            user.requestOtp(afterRequestingOtp,req,res);
+                        })
+                        .catch(err => {
+                            return res.status(500).json({
+                                error : err
+                            });                
+                        });                    
+                    }
+                    else{
+                        
+                        const user = new User({
+                            _id : mongoose.Types.ObjectId(),
+                            email : req.body.email,
+                            password : hash,
+                            name : req.body.name,
+                            mobile : req.body.mobile
+                            });
+        
+                            user.save()
+                            .then(resultt => {
+                                user.requestOtp(afterRequestingOtp,req,res);
+                            })
+                            .catch(err => {
+                                return res.status(500).json({
+                                    error : err
+                                });                
+                            });                    
+                    }
+
                 }   
             });
-        }
     })
     .catch(err => {
         return res.status(500).json({
@@ -50,6 +82,7 @@ exports.post_new_user = (req,res,next) => {
 
 
     function afterRequestingOtp(err, result){
+        console.log('reached here at after request otp');
         if(err || !result){
             return res.status(401).json({
                 error : err

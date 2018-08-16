@@ -28,9 +28,10 @@ exports.get_all_admins = (req,res,next) => {
     .then( results => {
         return res.status(200).json({
             count : results.length,
-            users : results.map(result => {
+            admins : results.map(result => {
                 return {
-                    Email : result.email
+                    Email : result.mobile,
+                    id : result._id
                 }
             })
         });
@@ -44,7 +45,7 @@ exports.get_all_admins = (req,res,next) => {
 
 exports.post_new_admin = (req,res,next) => {
 
-    Admin.find({email : req.body.email})
+    Admin.find({mobile : req.body.mobile})
     .exec()
     .then(result => {
         if(result.length >= 1){
@@ -62,27 +63,36 @@ exports.post_new_admin = (req,res,next) => {
                 else{
                     const admin = new Admin({
                         _id : mongoose.Types.ObjectId(),
-                        email : req.body.email,
+                        mobile : req.body.mobile,
                         password : hash
                     });
 
                     admin.save()
                     .then(result => {
 
-                        const token = jwt.sign(
-                            {
-                                email : admin.email,
-                                adminId : admin._id
-                            },
-                            process.env.JWT_ADMIN_PASS_KEY,
-                            {
-                                expiresIn : "1h"
-                            }
-                        );
-                        return res.status(201).json({
-                            message : "Admin Created",
-                            token : token
-                        });                
+                        // const token = jwt.sign(
+                        //     {
+                        //         mobile : admin.mobile,
+                        //         adminId : admin._id
+                        //     },
+                        //     process.env.JWT_ADMIN_PASS_KEY,
+                        //     {
+                        //         expiresIn : "1h"
+                        //     }                        
+                        // );
+
+                        admin.requestAuthToken()
+                        .then(token => {
+                            return res.status(200).json({
+                                message : "Account verified! 🎉",
+                                 token : token
+                            })    
+                        })
+                        .catch(err => {
+                            return res.status(401).json({
+                                error : err
+                            });
+                        });
                     })
                     .catch(err => {
                         return res.status(500).json({
@@ -102,7 +112,7 @@ exports.post_new_admin = (req,res,next) => {
 
 
 exports.try_login = (req,res,next) => {
-    Admin.find({email : req.body.email})
+    Admin.find({mobile : req.body.mobile})
     .exec()
     .then(result => {
         if(result.length < 1){
@@ -122,8 +132,8 @@ exports.try_login = (req,res,next) => {
 
                         const token = jwt.sign(
                             {
-                                email : result[0].email,
-                                userId : result[0]._id
+                                mobile : result[0].mobile,
+                                adminId : result[0]._id
                             },
                             process.env.JWT_ADMIN_PASS_KEY,
                             {
@@ -168,6 +178,23 @@ exports.delete_user = (req, res, next)=>{
 
 exports.delete_admin = (req, res, next)=>{
     const adminId = req.userData.adminId;
+
+    Admin.remove({ _id : adminId })
+    .exec()
+    .then(result => {
+        return res.status(200).json({
+            message : "admin deleted"
+        });
+    })
+    .catch(err => {
+        return res.status(500).json({
+            error : err
+        });
+    });
+};
+
+exports.delete_admin_withId = (req, res, next)=>{
+    const adminId = req.params.adminId;
 
     Admin.remove({ _id : adminId })
     .exec()

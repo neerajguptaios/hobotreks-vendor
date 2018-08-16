@@ -45,39 +45,60 @@ userSchema.methods.verifyMobileNumber = function(otp, cb) {
 
     nexmo.verify.check({request_id: self.request_id, code: otp}, (err, result) => {
         if(err){
-            return cb(err,nil);
+            return cb(err,null);
         }
     
         self.mobile_verified = true;
         self.save()
         .then(res => {
-            return cb(nil,this)
+            return cb(null,this)
         })
         .catch(err => {
-            return cb(err,nil);
+            return cb(new Error(err),null);
         });
 
     });
 };
 
 
-userSchema.methods.requestOtp = function(cb) {
+userSchema.methods.requestOtp = function(cb,req,res) {
     var self = this;
-    nexmo.verify.request({number: self.mobile, brand: 'Hobotreks Company', country : 'IN'},(err,res)=>{
-        
-        if(err){
-            return cb(err,nil);
-        }
-    
-        self.request_id = res.request_id;
-        self.save()
-        .then(res => {
-            return cb(nil,this)
-        })
-        .catch(err => {
-            return cb(err,nil);
-        });
+
+    console.log('start');
+    self.request_id = "result.request_id";
+    self.save()
+    .then(res => {
+        console.log('then 1');
+        console.log('then 2');
+         return cb(null,this);
+    })
+    .catch(err => {
+        console.log('error 1');
+            //do your job here
+            console.log('error 2');
+            return cb('error',null);
+
+            // return res.status(500).json({
+            //     message : "Internal Server Error !!",
+            //     Error : err
+            // });
+
     });
+
+    console.log('last');
+
+    // User.update({_id : self.id},{ $set : {
+    //     request_id : result.request_id
+    // }})
+    // .exec()
+
+    // nexmo.verify.request({number: self.mobile, brand: 'Hobotreks Company', country : 'IN'},(err,result)=>{
+        
+    //     if(err){
+    //         return cb(err,nil);
+    //     }
+    
+    // });
 
 };
 
