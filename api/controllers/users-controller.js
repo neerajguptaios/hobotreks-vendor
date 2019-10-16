@@ -3,8 +3,26 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
  
 
+
+exports.requestOtp = (req,res,next) => {
+
+    let user = {};
+    User.find({mobile : req.body.mobile})
+    .exec()
+    .then(result => {
+        if(result.length >= 1){
+            user = result[0];
+            if(user.mobile_verified){
+                return res.status(500).json({
+                    message : "Mobile number already exist, please login."
+                });    
+            }
+        }
+    })
+}
+
+
 exports.post_new_user = (req,res,next) => {
-    console.log(req.body);
     let user = {};
     User.find({mobile : req.body.mobile})
     .exec()

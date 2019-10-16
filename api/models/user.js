@@ -18,11 +18,9 @@ const userSchema = mongoose.Schema({
     },
     password : {
         type : String,
-        required: true
     },
     name : {
         type : String,
-        required : true
     },
     mobile : {
         type : String,
@@ -34,9 +32,11 @@ const userSchema = mongoose.Schema({
     mobile_verified : {
         type : Boolean
     },
+
     email_verified : {
         type : Boolean
-    }
+    },
+    profile_completed : Boolean
 });
 
 
@@ -45,7 +45,7 @@ userSchema.methods.verifyMobileNumber = function(otp, cb) {
 
     nexmo.verify.check({request_id: self.request_id, code: otp}, (err, result) => {
         if(err){
-            return cb(err,null);
+            return cb(new Error(err),null);
         }
     
         self.mobile_verified = true;
@@ -61,45 +61,23 @@ userSchema.methods.verifyMobileNumber = function(otp, cb) {
 };
 
 
-userSchema.methods.requestOtp = function(cb,req,res) {
+userSchema.methods.requestOtp = function(cb) {
     var self = this;
-
-    console.log('start');
-    self.request_id = "result.request_id";
-    self.save()
-    .then(res => {
-        console.log('then 1');
-        console.log('then 2');
-         return cb(null,this);
-    })
-    .catch(err => {
-        console.log('error 1');
-            //do your job here
-            console.log('error 2');
-            return cb('error',null);
-
-            // return res.status(500).json({
-            //     message : "Internal Server Error !!",
-            //     Error : err
-            // });
-
-    });
-
-    console.log('last');
-
-    // User.update({_id : self.id},{ $set : {
-    //     request_id : result.request_id
-    // }})
-    // .exec()
-
-    // nexmo.verify.request({number: self.mobile, brand: 'Hobotreks Company', country : 'IN'},(err,result)=>{
+    nexmo.verify.request({number: self.mobile, brand: 'Hobotreks Company', country : 'IN'},(err,result)=>{
         
-    //     if(err){
-    //         return cb(err,nil);
-    //     }
-    
-    // });
+        if(err){
+            return cb(new Error(err),null);
+        }
 
+        self.request_id = result.request_id;
+        self.save()
+        .then(res => {
+            return cb(null,this);
+        })
+        .catch(err => {
+                return cb(new Error(err),null);
+        });
+    });
 };
 
 userSchema.methods.requestAuthToken = () => {
