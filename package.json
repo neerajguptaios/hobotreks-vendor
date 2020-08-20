@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/nikusingla/hobotreks-vendor#readme",
   "dependencies": {
-    "bcrypt": "^3.0.0",
+    "bcrypt": "^5.0.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "jsonwebtoken": "^8.3.0",
